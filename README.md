@@ -1,35 +1,70 @@
-# pymongo-api
+# I. Практика
+1. **Запуск docker-compose**:
+   ```bash
+   docker-compose up -d
 
-## Как запустить
+2. **Подключение к mongos**:
 
-Запускаем mongodb и приложение
+   ```bash
+   docker exec -it mongos_router mongosh
 
-```shell
-docker compose up -d
-```
+3. **Инициализация конфигурационного сервера**:
 
-Заполняем mongodb данными
+   ```bash
+   rs.initiate({
+      _id: "config_server",
+      members: [{_id: 0, host: "configSrv:27017"}],
+          configsvr: true,
+      version: 1
+    });
 
-```shell
-./scripts/mongo-init.sh
-```
+4. **Инициализация шардов с репликами**:
 
-## Как проверить
+   ```bash
+   rs.initiate(
+    {
+        _id: "shard1", 
+        members: [
+            {_id: 0, host: "shard1:27018"},
+            {_id: 1, host: "shard1:27028"},
+            {_id: 2, host: "shard1:27038"}], 
+            version: 1});
 
-### Если вы запускаете проект на локальной машине
+   rs.initiate(
+    {
+        _id: "shard2", 
+        members: [
+            {_id: 0, host: "shard2:27019"},
+            {_id: 1, host: "shard2:27029"},
+            {_id: 2, host: "shard2:27039"}], 
+            version: 1});
 
-Откройте в браузере http://localhost:8080
+5. **Добавление шардов в кластер**:
 
-### Если вы запускаете проект на предоставленной виртуальной машине
+   ```bash
+   sh.addShard("shard1/shard1:27018");
+   sh.addShard("shard2/shard2:27019");
 
-Узнать белый ip виртуальной машины
+6. **Включение шардирования БД**:
 
-```shell
-curl --silent http://ifconfig.me
-```
+   ```bash
+   sh.enableSharding("somedb");
+   sh.shardCollection("somedb.helloDoc", {"_id": "hashed"});
 
-Откройте в браузере http://<ip виртуальной машины>:8080
+7. **Проверка статуса шардирования**:
 
-## Доступные эндпоинты
+   ```bash
+   sh.status();
 
-Список доступных эндпоинтов, swagger http://<ip виртуальной машины>:8080/docs
+8. **Включение кеширования**:
+
+   ```bash
+   REDIS_URL: "redis://redis_1:6379"; 
+
+9. **Проверка кеширования**:
+   
+   ```bash
+   curl http://localhost:8080/helloDoc/users
+
+# II. Схема
+https://drive.google.com/file/d/1ELOKZpuVxH4WKBUKmHo3X6D05SSijMmd/view?usp=sharing
